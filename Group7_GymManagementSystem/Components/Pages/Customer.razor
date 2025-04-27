@@ -1,0 +1,211 @@
+﻿@page "/customer"
+
+<!--Either a form or a table showing the retrieved values-->
+@if (showForm)
+{
+    <div class="d-flex justify-content-between align-items-left mb-3 display-md-3">
+        <span class="h5 mb-0">New Customer</span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <EditForm Model="newCustomer" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-2">
+                    <label for="firstName">First Name</label>
+                    <InputText id="firstName" class="form-control" @bind-Value="newCustomer.FirstName" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="lastName">Last Name</label>
+                    <InputText id="lastName" class="form-control" @bind-Value="newCustomer.LastName" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="phoneNumber">Phone Number [Format: (321) 123-2333]</label>
+                    <InputText id="phoneNumber" class="form-control" @bind-Value="newCustomer.PhoneNumber" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="email">Email</label>
+                    <InputText id="email" class="form-control" @bind-Value="newCustomer.Email" />
+                </div>
+                <div class="form-group mb-3">
+                    <label for="membershipType">Membership Type</label>
+                    <InputSelect id="membershipType" class="form-control" @bind-Value="newCustomer.MembershipType">
+                        @foreach (Group7_GymManagementSystem.Data.MembershipType type in Enum.GetValues(typeof(Group7_GymManagementSystem.Data.MembershipType)))
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="membershipStatus">Membership Status</label>
+                    <InputSelect id="membershipStatus" class="form-control" @bind-Value="newCustomer.MembershipStatus">
+                        @foreach (Group7_GymManagementSystem.Data.MembershipStatus type in Enum.GetValues(typeof(Group7_GymManagementSystem.Data.MembershipStatus)))
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    @if (isEditMode)
+                    {
+                        <span>Update</span>
+                    }
+                    else
+                    {
+                        <span>Save</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3 display-md-3">
+        <span class="h5 mb-0">Customers</span>
+        <button class="btn btn-primary" @onclick="ToggleForm">Add</button>
+    </div>
+
+    <table class="table table-hover table-dark">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Phone Number</th>
+                <th scope="col">Email</th>
+                <th scope="col">Membership Type</th>
+                <th scope="col">Membership Status</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Group7_GymManagementSystem.Data.Customer customer in customers)
+            {
+                <tr>
+                    <td>@customer.Id</td>
+                    <td>@customer.FirstName</td>
+                    <td>@customer.LastName</td>
+                    <td>@customer.PhoneNumber</td>
+                    <td>@customer.Email</td>
+                    <td>@customer.MembershipType</td>
+                    <td>@customer.MembershipStatus</td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => EditCustomer(customer)">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-danger" @onclick="() => DeleteCustomer(customer)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Group7_GymManagementSystem.Data.Customer> customers = Group7_GymManagementSystem.Data.Customer.GetAllCustomers();
+    Group7_GymManagementSystem.Data.Customer newCustomer = new();
+    bool showForm = false;
+    bool isEditMode = false;
+
+    // Between a new one or and exidting an old one
+    void ToggleForm()
+    {
+        showForm = !showForm;
+        isEditMode = false;
+        newCustomer = new();
+    }
+
+    // UI method to call the class method EditCustomer and AddCustomer Customer Staff
+    void HandleValidSubmit()
+    {
+        try
+        {
+            if (customers.Any() && !isEditMode)
+            {
+                newCustomer.Id = customers.Max(c => c.Id) + 1;
+            }
+
+            if (isEditMode)
+            {
+                newCustomer.EditCustomer();
+            }
+            else
+            {
+                if (newCustomer == null)
+                {
+                    throw new Group7_GymManagementSystem.Data.CustomNullException("Customer cannot be null.");
+                }
+
+                Group7_GymManagementSystem.Data.Customer.AddCustomer(newCustomer);
+            }
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+        finally
+        {
+            customers = Group7_GymManagementSystem.Data.Customer.GetAllCustomers();
+            showForm = false;
+        }
+    }
+
+    // On clicking the edit button in the data row realted to it u call this method, which helps the form have that row data prefilled. So that its eaier for you to see what you are changing
+    void EditCustomer(Group7_GymManagementSystem.Data.Customer customer)
+    {
+        isEditMode = true;
+        newCustomer = new Group7_GymManagementSystem.Data.Customer
+        {
+            Id = customer.Id,
+            FirstName = customer.FirstName,
+            LastName = customer.LastName,
+            PhoneNumber = customer.PhoneNumber,
+            Email = customer.Email,
+            MembershipType = customer.MembershipType,
+            MembershipStatus = customer.MembershipStatus
+        };
+        showForm = true;
+    }
+
+    // UI method to call the class method DeleteCustomer from Customer
+    void DeleteCustomer(Group7_GymManagementSystem.Data.Customer customer)
+    {
+        try
+        {
+            if (customer == null)
+            {
+                throw new Group7_GymManagementSystem.Data.CustomNullException("Customer cannot be null.");
+            }
+
+            Group7_GymManagementSystem.Data.Customer.DeleteCustomer(customer.Id);
+            customers = Group7_GymManagementSystem.Data.Customer.GetAllCustomers();  
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+    }
+
+    // Exist from the form state when its a new one and also when it and existing one
+    void CancelEdit()
+    {
+        showForm = false;
+        isEditMode = false;
+        newCustomer = new();
+    }
+}

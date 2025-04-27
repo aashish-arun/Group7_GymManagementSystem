@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\Group7_GymManagementSystem.props" />
+</Project>

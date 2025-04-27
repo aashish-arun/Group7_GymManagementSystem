@@ -1,0 +1,250 @@
+﻿@page "/appointment"
+
+<!--Either a form or a table showing the retrieved values-->
+@if (showForm)
+{
+    <div class="d-flex justify-content-between align-items-left mb-3 display-md-3">
+        <span class="h5 mb-0">@((isEditMode ? "Edit" : "New") + " Appointment")</span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <EditForm Model="newAppointment" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-2">
+                    <label for="date">Date</label>
+                    <input type="text" id="date" class="form-control bg-grey" value="@DateTime.Now.ToString("dd-MM-yyyy")" readonly />
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="customerId">Customer Name</label>
+                    <InputSelect id="customerId" class="form-control" @bind-Value="newAppointment.CustomerId">
+                        <option value="">Select a customer</option>
+                        @foreach (Group7_GymManagementSystem.Data.Customer customer in customers)
+                        {
+                            <option value="@customer.Id">@customer.FirstName @customer.LastName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="trainerId">Trainer Name</label>
+                    <InputSelect id="trainerId" class="form-control" @bind-Value="newAppointment.TrainerId">
+                        <option value="">Select a trainer</option>
+                        @foreach (Group7_GymManagementSystem.Data.Trainer trainer in trainers)
+                        {
+                            <option value="@trainer.Id">@trainer.FirstName @trainer.LastName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="form-group mb-2">
+                    <label for="scheduledDate">Scheduled Date</label>
+                    <InputDate id="scheduledDate" class="form-control" @bind-Value="newAppointment.ScheduledDate" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="scheduledTime">Scheduled Time</label>
+                    <InputSelect id="scheduledTime" class="form-control" @bind-Value="newAppointment.ScheduledTime">
+                        @foreach (Group7_GymManagementSystem.Data.ScheduledTime time in Enum.GetValues(typeof(Group7_GymManagementSystem.Data.ScheduledTime)))
+                        {
+                            <option value="@time">@Group7_GymManagementSystem.Data.Appointment.GetDisplayName(time)</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    @if (isEditMode)
+                    {
+                        <span>Update</span>
+                    }
+                    else
+                    {
+                        <span>Save</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3 display-md-3">
+        <span class="h5 mb-0">Appointments</span>
+        <button class="btn btn-primary" @onclick="ToggleForm">Add</button>
+    </div>
+
+    <table class="table table-hover table-dark">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Date</th>
+                <th scope="col">Customer Name</th>
+                <th scope="col">Trainer Name</th>
+                <th scope="col">Scheduled Date</th>
+                <th scope="col">Scheduled Time</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Group7_GymManagementSystem.Data.Appointment appointment in appointments)
+            {
+                <tr>
+                    <td>@appointment.Id</td>
+                    <td>@appointment.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@customers.FirstOrDefault(c => c.Id == appointment.CustomerId)?.FirstName @customers.FirstOrDefault(c => c.Id == appointment.CustomerId)?.LastName</td>
+                    <td>@trainers.FirstOrDefault(t => t.Id == appointment.TrainerId)?.FirstName @trainers.FirstOrDefault(t => t.Id == appointment.TrainerId)?.LastName</td>
+                    <td>@appointment.ScheduledDate.ToString("yyyy-MM-dd")</td>
+                    <td>@Group7_GymManagementSystem.Data.Appointment.GetDisplayName(appointment.ScheduledTime)</td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => EditAppointment(appointment)">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-danger" @onclick="() => DeleteAppointment(appointment)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Group7_GymManagementSystem.Data.Appointment> appointments = Group7_GymManagementSystem.Data.Appointment.GetAllAppointments();
+    List<Group7_GymManagementSystem.Data.Customer> customers = Group7_GymManagementSystem.Data.Customer.GetAllCustomers();
+    List<Group7_GymManagementSystem.Data.Trainer> trainers = Group7_GymManagementSystem.Data.Trainer.GetAllTrainers();
+    Group7_GymManagementSystem.Data.Appointment newAppointment = new()
+    {
+        Date = DateTime.Now,
+        ScheduledDate = DateTime.Today
+    };
+
+    bool showForm = false;
+    bool isEditMode = false;
+
+    // Between a new one or and exidting an old one
+    void ToggleForm()
+    {
+        showForm = !showForm;
+        isEditMode = false;
+        newAppointment = new()
+            {
+                Date = DateTime.Now,
+                ScheduledDate = DateTime.Today
+            };
+    }
+
+    // UI method to call the throw an error when instead of calling class method EditAppointment and to call AddAppointment from Appointment
+    void HandleValidSubmit()
+    {
+        try
+        {
+
+
+            if (appointments.Any() && !isEditMode)
+            {
+                newAppointment.Id = appointments.Max(c => c.Id) + 1;
+                newAppointment.Date = DateTime.Now;
+            }
+
+            if (isEditMode)
+            {
+                throw new Group7_GymManagementSystem.Data.CustomNotAvailableYetException("The edit functionality is not available yet.");
+            }
+            else
+            { 
+                if (newAppointment == null)
+                {
+                    throw new Group7_GymManagementSystem.Data.CustomNullException("Appointment cannot be null.");
+                }
+
+                if (newAppointment.ScheduledDate == DateTime.MinValue)
+                {
+                    throw new Group7_GymManagementSystem.Data.CustomForgotToSelectDateException();
+                }
+            
+                Group7_GymManagementSystem.Data.Appointment.AddAppointment(newAppointment);
+            }
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNotAvailableYetException ex)
+        {
+            Console.WriteLine("Custom exception: " + ex.Message);
+        }
+        catch (Group7_GymManagementSystem.Data.CustomForgotToSelectDateException ex)
+        {
+            Console.WriteLine("Custom exception: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+        finally
+        {
+            appointments = Group7_GymManagementSystem.Data.Appointment.GetAllAppointments();
+            showForm = false;
+        }
+    }
+
+    // On clicking the edit button in the data row realted to it u call this method, but as it it in editmode it throws an error.
+    void EditAppointment(Group7_GymManagementSystem.Data.Appointment appointment)
+    {
+        try
+        {
+            if (!isEditMode)
+            {
+                throw new Group7_GymManagementSystem.Data.CustomNotAvailableYetException("The edit functionality is not available yet.");
+            }
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNotAvailableYetException ex)
+        {
+            Console.WriteLine("Custom exception: " + ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("General error: " + ex.Message);
+        }
+    }
+
+    // UI method to call the class method DeleteAppointment from Appointment
+    void DeleteAppointment(Group7_GymManagementSystem.Data.Appointment appointment)
+    {
+        try
+        {
+            if (newAppointment == null)
+            {
+                throw new Group7_GymManagementSystem.Data.CustomNullException("Appointment cannot be null.");
+            }
+
+            Group7_GymManagementSystem.Data.Appointment.DeleteAppointment(appointment.Id);
+            appointments = Group7_GymManagementSystem.Data.Appointment.GetAllAppointments();
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+    }
+
+    // Exist from the form state when its a new one and also when it and existing one
+    void CancelEdit()
+    {
+        showForm = false;
+        isEditMode = false;
+        newAppointment = new()
+            {
+                Date = DateTime.Now,
+                ScheduledDate = DateTime.Today
+            };
+    }
+}

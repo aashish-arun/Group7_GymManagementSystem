@@ -1,0 +1,84 @@
+﻿@page "/dashboard"
+
+<h3 class="text-center mb-4">Dashboard</h3>
+
+<!--Always a table-->
+<table class="table table-bordered table-striped table-hover text-center align-middle">
+    <thead>
+        <tr class="table-primary">
+            <th colspan="4">
+                @if (totalAppointmentsToday > 0)
+                {
+                    <span><strong>Total Appointments Today:</strong> @totalAppointmentsToday</span>
+                }
+                else
+                {
+                    <span>No appointments scheduled for today.</span>
+                }
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="2" class="text-center">
+                <strong>Past Appointments:</strong> @totalAppointmentsPast
+            </td>
+            <td colspan="2" class="text-center">
+                <strong>Future Appointments:</strong> @totalAppointmentsFuture
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <strong>Total Staff:</strong><br /> @totalStaff
+            </td>
+            <td colspan="2">
+                <strong>Total Customers:</strong><br /> @totalCustomers
+            </td>
+            <td>
+                <strong>Total Trainers:</strong><br /> @totalTrainers
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" class="text-muted">
+                <!-- For future updates -->
+                More dashboard stats coming soon...
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+@code {
+    private int totalAppointmentsToday = 0;
+    private int totalAppointmentsPast = 0;
+    private int totalAppointmentsFuture = 0;
+    private int totalStaff = 0;
+    private int totalCustomers = 0;
+    private int totalTrainers = 0;
+
+    // Run them on loading this page
+    protected override async Task OnInitializedAsync()
+    {
+        Task<List<Group7_GymManagementSystem.Data.Appointment>> appointmentsTask = Task.Run(() => Group7_GymManagementSystem.Data.Appointment.GetAllAppointments() ?? new List<Group7_GymManagementSystem.Data.Appointment>());
+        Task<List<Group7_GymManagementSystem.Data.Staff>> staffsTask = Task.Run(() => Group7_GymManagementSystem.Data.Staff.GetAllStaffs() ?? new List<Group7_GymManagementSystem.Data.Staff>());
+        Task<List<Group7_GymManagementSystem.Data.Customer>> customersTask = Task.Run(() => Group7_GymManagementSystem.Data.Customer.GetAllCustomers() ?? new List<Group7_GymManagementSystem.Data.Customer>());
+        Task<List<Group7_GymManagementSystem.Data.Trainer>> trainersTask = Task.Run(() => Group7_GymManagementSystem.Data.Trainer.GetAllTrainers() ?? new List<Group7_GymManagementSystem.Data.Trainer>());
+
+        List<Group7_GymManagementSystem.Data.Appointment> appointments = await appointmentsTask;
+        List<Group7_GymManagementSystem.Data.Staff> staffs = await staffsTask;
+        List<Group7_GymManagementSystem.Data.Customer> customers = await customersTask;
+        List<Group7_GymManagementSystem.Data.Trainer> trainers = await trainersTask;
+
+        DateTime today = DateTime.Today;
+
+        totalAppointmentsToday = appointments.Count(a => a.ScheduledDate.Date == today);
+
+        totalAppointmentsPast = appointments.Count(a => a.ScheduledDate.Date < today);
+
+        totalAppointmentsFuture = appointments.Count(a => a.ScheduledDate.Date > today);
+
+
+        totalStaff = staffs.Count;
+        totalCustomers = customers.Count;
+        totalTrainers = trainers.Count;
+    }
+}

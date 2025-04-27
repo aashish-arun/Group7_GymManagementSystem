@@ -1,0 +1,8 @@
+C:\Users\USER\Group7_GymManagementSystem\Group7_GymManagementSystem\wwwroot\css\bootstrap\bootstrap.min.css.map
+C:\Users\USER\Group7_GymManagementSystem\Group7_GymManagementSystem\wwwroot\index.html
+C:\Users\USER\Group7_GymManagementSystem\Group7_GymManagementSystem\wwwroot\css\bootstrap\bootstrap.min.css
+C:\Users\USER\Group7_GymManagementSystem\Group7_GymManagementSystem\wwwroot\css\app.css
+wwwroot\css\app.css
+wwwroot\css\bootstrap\bootstrap.min.css
+wwwroot\css\bootstrap\bootstrap.min.css.map
+wwwroot\index.html

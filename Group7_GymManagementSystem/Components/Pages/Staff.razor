@@ -1,0 +1,197 @@
+﻿@page "/staff"
+
+<!--Either a form or a table showing the retrieved values-->
+@if (showForm)
+{
+    <div class="d-flex justify-content-between align-items-left mb-3 display-md-3">
+        <span class="h5 mb-0">New Staff</span>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <EditForm Model="newStaff" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group mb-2">
+                    <label for="firstName">First Name</label>
+                    <InputText id="firstName" name="firstName" class="form-control" @bind-Value="newStaff.FirstName" placeholder="@newStaff.FirstName" autocomplete="given-name" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="lastName">Last Name</label>
+                    <InputText id="lastName" name="lastName" class="form-control" @bind-Value="newStaff.LastName" placeholder="@newStaff.LastName" autocomplete="family-name" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="phoneNumber">Phone Number [Format: (321) 123-2333]</label>
+                    <InputText id="phoneNumber" name="phoneNumber" class="form-control" @bind-Value="newStaff.PhoneNumber" placeholder="@newStaff.PhoneNumber" autocomplete="tel" />
+                </div>
+                <div class="form-group mb-2">
+                    <label for="email">Email</label>
+                    <InputText id="email" name="email" class="form-control" @bind-Value="newStaff.Email" placeholder="@newStaff.Email" autocomplete="email" />
+                </div>
+                <div class="form-group mb-3">
+                    <label for="jobTitle">Job Title</label>
+                    <InputText id="jobTitle" name="jobTitle" class="form-control" @bind-Value="newStaff.JobTitle" placeholder="@newStaff.JobTitle" autocomplete="off" />
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    @if (isEditMode)
+                    {
+                        <span>Update</span>
+                    }
+                    else
+                    {
+                        <span>Save</span>
+                    }
+                </button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3 display-md-3">
+        <span class="h5 mb-0">Staff</span>
+        <button class="btn btn-primary" @onclick="ToggleForm">Add</button>
+    </div>
+
+    <table class="table table-hover table-dark">
+        <thead>
+            <tr>
+                <th scope="col">SL No.</th>
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Phone Number</th>
+                <th scope="col">Email</th>
+                <th scope="col">Job Title</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Group7_GymManagementSystem.Data.Staff staff in staffs)
+            {
+                <tr>
+                    <td>@staff.Id</td>
+                    <td>@staff.FirstName</td>
+                    <td>@staff.LastName</td>
+                    <td>@staff.PhoneNumber</td>
+                    <td>@staff.Email</td>
+                    <td>@staff.JobTitle</td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => EditStaff(staff)">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-danger" @onclick="() => DeleteStaff(staff)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Group7_GymManagementSystem.Data.Staff> staffs = Group7_GymManagementSystem.Data.Staff.GetAllStaffs();
+    Group7_GymManagementSystem.Data.Staff newStaff = new();
+    bool showForm = false;
+    bool isEditMode = false;
+
+    // Between a new one or and exidting an old one
+    void ToggleForm()
+    {
+        showForm = !showForm;
+        isEditMode = false;
+        newStaff = new();
+    }
+
+    // UI method to call the class method EditStaff and AddStaff from Staff
+    void HandleValidSubmit()
+    {
+        try
+        {
+            if (staffs.Any() && !isEditMode)
+            {
+                newStaff.Id = staffs.Max(c => c.Id) + 1;
+            }
+
+            if (isEditMode)
+            {
+                newStaff.EditStaff();
+            }
+            else
+            {
+                if (newStaff == null)
+                {
+                    throw new Group7_GymManagementSystem.Data.CustomNullException("Staff cannot be null.");
+
+                }
+
+                Group7_GymManagementSystem.Data.Staff.AddStaff(newStaff);
+                
+            }
+            showForm = false;
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+        finally
+        {
+            staffs = Group7_GymManagementSystem.Data.Staff.GetAllStaffs();
+        }
+    }
+
+    // On clicking the edit button in the data row realted to it u call this method, which helps the form have that row data prefilled. So that its eaier for you to see what you are changing
+    void EditStaff(Group7_GymManagementSystem.Data.Staff staff)
+    {
+        isEditMode = true;
+        newStaff = new Group7_GymManagementSystem.Data.Staff
+            {
+                Id = staff.Id,
+                FirstName = staff.FirstName,
+                LastName = staff.LastName,
+                PhoneNumber = staff.PhoneNumber,
+                Email = staff.Email,
+                JobTitle = staff.JobTitle
+            };
+        showForm = true;
+    }
+
+    // UI method to call the class method DeleteStaff from Staff
+    void DeleteStaff(Group7_GymManagementSystem.Data.Staff staff)
+    {
+        try
+        {
+            if (staff == null)
+            {
+                throw new Group7_GymManagementSystem.Data.CustomNullException("Staff cannot be null.");
+
+            }
+
+            Group7_GymManagementSystem.Data.Staff.DeleteStaff((int)staff.Id);
+            staffs = Group7_GymManagementSystem.Data.Staff.GetAllStaffs();
+        }
+        catch (Group7_GymManagementSystem.Data.CustomNullException ex)
+        {
+            Console.WriteLine("Custom Null Error: " + ex.Message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Delete Error: " + e.Message);
+        }
+    }
+
+    // Exist from the form state when its a new one and also when it and existing one
+    void CancelEdit()
+    {
+        showForm = false;
+        isEditMode = false;
+        newStaff = new Group7_GymManagementSystem.Data.Staff();
+    }
+}
